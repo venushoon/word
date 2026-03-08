@@ -7,7 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&display=swap');
-    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f5f9; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    /* 텍스트 드래그 방지(select-none)를 추가하여 터치 시 쾌적함 극대화 */
+    body { font-family: 'Noto Sans KR', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
     
     .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     .modal-in { animation: fadeIn 0.3s ease-out forwards; }
@@ -29,16 +30,14 @@
       30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
       40%, 60% { transform: translate3d(4px, 0, 0); }
     }
-
-    .game-board-fit { max-height: calc(100dvh - 120px); }
   </style>
 </head>
-<body class="min-h-[100dvh] flex flex-col justify-between bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-slate-800 overflow-x-hidden">
+<body class="h-[100dvh] flex flex-col bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-slate-800 overflow-hidden">
 
-  <main class="flex-grow flex flex-col items-center justify-start md:justify-center p-3 md:p-8 w-full max-w-7xl mx-auto h-full">
+  <main class="flex-1 w-full max-w-6xl mx-auto flex flex-col p-3 md:p-6 overflow-hidden">
     
-    <header class="w-full flex items-center justify-between gap-2 mb-4 md:mb-8 h-10 md:h-14">
-      <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black text-blue-600 tracking-tight drop-shadow-sm flex-grow">
+    <header class="flex-shrink-0 w-full flex items-center justify-between gap-2 mb-2 md:mb-4 h-10 md:h-12 relative">
+      <h1 class="text-2xl sm:text-3xl md:text-5xl font-black text-blue-600 tracking-tight drop-shadow-sm flex-grow">
         ✨ 유의어 터치 게임
       </h1>
       <button id="restart-btn" onclick="startGame()" class="hidden flex-shrink-0 rounded-full px-4 py-2 text-sm md:text-xl font-bold bg-blue-100 text-blue-700 active:scale-95 transition-transform">
@@ -46,50 +45,51 @@
       </button>
     </header>
 
-    <div class="w-full grid gap-4 lg:gap-8 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_350px] flex-grow game-board-fit">
+    <div class="flex-1 grid gap-4 lg:gap-8 xl:grid-cols-[1fr_300px] min-h-0">
       
-      <div class="flex flex-col gap-3 md:gap-6 w-full h-full">
-        <div class="grid grid-cols-3 gap-2 md:gap-6">
-          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-            <span class="text-[10px] md:text-base font-bold text-slate-400 mb-1">⏰ 남은 시간</span>
-            <span id="ui-time" class="text-2xl md:text-5xl font-black text-rose-500">60초</span>
+      <div class="flex flex-col gap-3 md:gap-5 w-full h-full min-h-0">
+        <div class="flex-shrink-0 grid grid-cols-3 gap-2 md:gap-4">
+          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-4 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-[10px] md:text-sm lg:text-base font-bold text-slate-400 mb-1">⏰ 남은 시간</span>
+            <span id="ui-time" class="text-2xl md:text-4xl lg:text-5xl font-black text-rose-500">60초</span>
           </div>
-          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-            <span class="text-[10px] md:text-base font-bold text-slate-400 mb-1">🏆 맞힌 개수</span>
-            <span id="ui-score" class="text-2xl md:text-5xl font-black text-amber-500">0개</span>
+          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-4 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-[10px] md:text-sm lg:text-base font-bold text-slate-400 mb-1">🏆 맞힌 개수</span>
+            <span id="ui-score" class="text-2xl md:text-4xl lg:text-5xl font-black text-amber-500">0개</span>
           </div>
-          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-            <span class="text-[10px] md:text-base font-bold text-slate-400 mb-1">🔥 연속 정답</span>
-            <span id="ui-streak" class="text-2xl md:text-5xl font-black text-emerald-500">0</span>
+          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-4 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-[10px] md:text-sm lg:text-base font-bold text-slate-400 mb-1">🔥 연속 정답</span>
+            <span id="ui-streak" class="text-2xl md:text-4xl lg:text-5xl font-black text-emerald-500">0</span>
           </div>
         </div>
 
-        <div class="h-2 md:h-4 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner flex-shrink-0">
+        <div class="flex-shrink-0 h-2 md:h-3 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
           <div id="ui-progress" class="h-full bg-blue-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
         </div>
 
-        <div class="rounded-[1.5rem] md:rounded-[3rem] border-4 border-white shadow-xl bg-white/90 backdrop-blur-md p-4 md:p-10 flex-grow flex flex-col justify-between">
+        <div class="flex-1 rounded-[1.5rem] md:rounded-[2.5rem] border-4 border-white shadow-xl bg-white/90 backdrop-blur-md p-4 md:p-8 flex flex-col justify-between min-h-0">
           
-          <div id="game-area" class="hidden flex-col h-full justify-between">
-            <div class="text-center flex-shrink-0 mt-2 md:mt-4">
-              <p class="mb-1 md:mb-4 text-sm md:text-2xl font-bold text-blue-400">이 낱말과 뜻이 비슷한 유의어는?</p>
-              <div id="current-word" class="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight text-slate-800 pop-in py-2">단어</div>
+          <div id="game-area" class="hidden flex-col h-full justify-between min-h-0">
+            <div class="flex-shrink-0 text-center mt-2">
+              <p class="mb-1 md:mb-2 lg:mb-4 text-sm md:text-xl lg:text-2xl font-bold text-blue-400">이 낱말과 뜻이 비슷한 유의어는?</p>
+              <div id="current-word" class="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-slate-800 pop-in py-2">단어</div>
             </div>
 
-            <div id="choices-area" class="grid grid-cols-2 gap-3 md:gap-6 mt-auto mb-2"></div>
+            <div id="choices-area" class="flex-1 grid grid-cols-2 gap-3 md:gap-5 mt-4 md:mt-6 mb-2 min-h-0">
+              </div>
             
-            <p id="feedback-msg" class="text-center text-sm md:text-2xl font-bold h-6 md:h-8 transition-opacity"></p>
+            <p id="feedback-msg" class="flex-shrink-0 text-center text-sm md:text-xl lg:text-2xl font-bold h-6 md:h-8 transition-opacity"></p>
           </div>
 
-          <div id="waiting-area" class="text-center my-auto flex flex-col items-center justify-center h-full">
-            <button onclick="startGame()" class="rounded-full px-14 py-6 md:px-24 md:py-8 text-3xl md:text-5xl font-black bg-blue-500 text-white shadow-[0_10px_25px_rgba(59,130,246,0.4)] transition-transform active:scale-95 hover:bg-blue-600 tracking-wide border-4 border-blue-400">
+          <div id="waiting-area" class="text-center m-auto flex flex-col items-center justify-center">
+            <button onclick="startGame()" class="rounded-full px-12 py-5 md:px-20 md:py-8 text-3xl md:text-5xl font-black bg-blue-500 text-white shadow-[0_10px_25px_rgba(59,130,246,0.4)] transition-transform active:scale-95 hover:bg-blue-600 tracking-wide border-4 border-blue-400">
               게임 시작
             </button>
           </div>
         </div>
       </div>
 
-      <div class="hidden lg:flex flex-col gap-6 h-full">
+      <div class="hidden xl:flex flex-col gap-6 h-full">
         <div class="rounded-3xl border-4 border-white shadow-xl bg-white/90 p-8 flex-grow">
           <h2 class="text-3xl font-bold text-slate-700 mb-6 border-b-2 border-slate-100 pb-4">📝 게임 방법</h2>
           <div class="space-y-6 text-xl font-medium text-slate-600">
@@ -102,19 +102,19 @@
     </div>
   </main>
 
-  <footer class="w-full bg-slate-200 text-slate-500 py-4 px-4 border-t-4 border-slate-300 flex-shrink-0">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-      <div class="text-xs md:text-sm font-semibold text-center md:text-left">
-        <span class="text-slate-600 text-sm md:text-base flex items-center justify-center md:justify-start gap-2">📂 선생님 단어장 설정</span>
+  <footer class="flex-shrink-0 w-full bg-slate-200 text-slate-500 py-3 md:py-4 px-4 border-t-4 border-slate-300 z-10">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="text-xs md:text-sm font-semibold text-center sm:text-left">
+        <span class="text-slate-600 flex items-center justify-center sm:justify-start gap-2">📂 선생님 단어장 설정</span>
       </div>
-      <div class="flex flex-row gap-2 w-full md:w-auto justify-center">
-        <button onclick="downloadTemplate()" class="rounded-lg border-2 border-slate-400 px-3 py-2 text-xs md:text-sm font-bold hover:bg-slate-300 transition-colors">
+      <div class="flex flex-row gap-2 w-full sm:w-auto justify-center">
+        <button onclick="downloadTemplate()" class="rounded-lg border-2 border-slate-400 px-3 py-1.5 text-xs md:text-sm font-bold hover:bg-slate-300 transition-colors">
           📥 양식 다운로드
         </button>
-        <input type="file" id="file-input" accept=".csv" class="block w-48 md:w-auto text-xs md:text-sm file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-white file:text-slate-600 hover:file:bg-slate-50 cursor-pointer" onchange="handleFileUpload(event)" />
+        <input type="file" id="file-input" accept=".csv" class="block w-48 md:w-auto text-xs md:text-sm file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-white file:text-slate-600 hover:file:bg-slate-50 cursor-pointer" onchange="handleFileUpload(event)" />
       </div>
     </div>
-    <p id="upload-msg" class="text-center mt-2 text-xs md:text-sm font-bold hidden max-w-7xl mx-auto bg-white p-2 rounded-lg"></p>
+    <p id="upload-msg" class="text-center mt-2 text-xs md:text-sm font-bold hidden max-w-6xl mx-auto bg-white p-2 rounded-lg"></p>
   </footer>
 
   <div id="game-over-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-in">
@@ -215,7 +215,7 @@
     let attempts = 0;
     let streak = 0;
     let bestStreak = 0;
-    let usedIndices = []; // 재시작해도 이 목록을 유지하여 중복 출제 방지
+    let usedIndices = []; 
     let currentRound = null;
     let timerInterval = null;
     let isChoiceLocked = false;
@@ -265,12 +265,12 @@
           if (newWordBank.length < 5) throw new Error("최소 5개 이상의 단어가 필요합니다.");
 
           wordBank = newWordBank;
-          usedIndices = []; // 단어장이 바뀌면 사용 기록 초기화
+          usedIndices = []; 
           
-          msgEl.className = "text-center mt-2 text-xs md:text-sm font-bold block max-w-7xl mx-auto p-2 rounded-lg bg-emerald-100 text-emerald-700";
+          msgEl.className = "text-center mt-2 text-xs md:text-sm font-bold block max-w-6xl mx-auto p-2 rounded-lg bg-emerald-100 text-emerald-700";
           msgEl.innerText = `✅ 성공! 새로운 단어장이 적용되었습니다.`;
         } catch (error) {
-          msgEl.className = "text-center mt-2 text-xs md:text-sm font-bold block max-w-7xl mx-auto p-2 rounded-lg bg-rose-100 text-rose-700";
+          msgEl.className = "text-center mt-2 text-xs md:text-sm font-bold block max-w-6xl mx-auto p-2 rounded-lg bg-rose-100 text-rose-700";
           msgEl.innerText = `⚠️ 단어장 오류: 양식을 다시 확인해 주세요.`;
         }
       };
@@ -279,7 +279,6 @@
 
     function buildRound() {
       let availableIndices = wordBank.map((_, i) => i).filter(i => !usedIndices.includes(i));
-      // 모든 단어를 다 소진했을 때만 기록을 초기화
       if (availableIndices.length === 0) {
         usedIndices = [];
         availableIndices = wordBank.map((_, i) => i);
@@ -310,7 +309,6 @@
       started = true;
       gameOver = false;
       isChoiceLocked = false;
-      // usedIndices = []; <-- 이전 게임 단어 중복 방지를 위해 삭제함!
 
       document.getElementById('game-over-modal').classList.add('hidden');
       document.getElementById('waiting-area').classList.add('hidden');
@@ -331,14 +329,12 @@
     }
 
     function goToHome() {
-      // 대기 화면으로 완전히 되돌리기
       document.getElementById('game-over-modal').classList.add('hidden');
       document.getElementById('game-area').classList.add('hidden');
       document.getElementById('game-area').classList.remove('flex');
       document.getElementById('waiting-area').classList.remove('hidden');
       document.getElementById('restart-btn').classList.add('hidden');
       
-      // 상태창 초기화
       document.getElementById('ui-time').innerText = `${GAME_TIME}초`;
       document.getElementById('ui-score').innerText = `0개`;
       document.getElementById('ui-streak').innerText = `0`;
@@ -359,7 +355,8 @@
       choicesArea.innerHTML = '';
       currentRound.choices.forEach((choice) => {
         const btn = document.createElement('button');
-        btn.className = "min-h-[80px] md:min-h-[140px] rounded-2xl md:rounded-[2rem] border-4 border-slate-200 bg-white text-slate-700 text-2xl md:text-5xl font-bold shadow-sm transition-transform active:scale-95 active:bg-slate-100 break-keep leading-tight";
+        /* h-full과 flex-1 구조를 이용해 버튼이 위아래 공간을 꽉 채우도록 수정 */
+        btn.className = "w-full h-full min-h-[70px] md:min-h-[100px] lg:min-h-[120px] rounded-2xl md:rounded-[2rem] border-4 border-slate-200 bg-white text-slate-700 text-2xl md:text-4xl lg:text-5xl font-bold shadow-sm transition-transform active:scale-95 active:bg-slate-100 flex items-center justify-center break-keep leading-tight";
         btn.innerText = choice.text;
         btn.onclick = () => handleChoice(choice, btn);
         choicesArea.appendChild(btn);
@@ -385,12 +382,12 @@
         streak++;
         if (streak > bestStreak) bestStreak = streak;
         
-        btnElement.className = "min-h-[80px] md:min-h-[140px] rounded-2xl md:rounded-[2rem] border-4 border-emerald-400 bg-emerald-100 text-emerald-800 text-2xl md:text-5xl font-bold shadow-sm transition-transform break-keep leading-tight";
-        feedbackMsg.className = "text-center text-sm md:text-2xl font-bold h-6 md:h-8 transition-opacity text-emerald-500";
+        btnElement.className = "w-full h-full min-h-[70px] md:min-h-[100px] lg:min-h-[120px] rounded-2xl md:rounded-[2rem] border-4 border-emerald-400 bg-emerald-100 text-emerald-800 text-2xl md:text-4xl lg:text-5xl font-bold shadow-sm transition-transform flex items-center justify-center break-keep leading-tight";
+        feedbackMsg.className = "text-center text-sm md:text-xl lg:text-2xl font-bold h-6 md:h-8 transition-opacity text-emerald-500";
         feedbackMsg.innerText = "🎉 딩동댕! 잘했어요!";
       } else {
         streak = 0;
-        btnElement.className = "min-h-[80px] md:min-h-[140px] rounded-2xl md:rounded-[2rem] border-4 border-rose-400 bg-rose-100 text-rose-800 text-2xl md:text-5xl font-bold shadow-sm transition-transform break-keep leading-tight";
+        btnElement.className = "w-full h-full min-h-[70px] md:min-h-[100px] lg:min-h-[120px] rounded-2xl md:rounded-[2rem] border-4 border-rose-400 bg-rose-100 text-rose-800 text-2xl md:text-4xl lg:text-5xl font-bold shadow-sm transition-transform flex items-center justify-center break-keep leading-tight";
         
         document.getElementById('current-word').classList.add('shake');
         setTimeout(() => document.getElementById('current-word').classList.remove('shake'), 400);
@@ -402,12 +399,11 @@
             b.classList.add('border-emerald-400', 'bg-emerald-100', 'text-emerald-800');
           }
         }
-        feedbackMsg.className = "text-center text-sm md:text-2xl font-bold h-6 md:h-8 transition-opacity text-rose-500";
+        feedbackMsg.className = "text-center text-sm md:text-xl lg:text-2xl font-bold h-6 md:h-8 transition-opacity text-rose-500";
         feedbackMsg.innerText = `앗! 정답은 '${currentRound.answer}'입니다.`;
       }
 
       updateStats();
-      // 대기 시간을 1200ms -> 600ms로 대폭 단축하여 반응성 상향
       setTimeout(() => { if (!gameOver) nextRound(); }, 600);
     }
 
