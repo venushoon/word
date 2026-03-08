@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&display=swap');
-    /* 텍스트 드래그 방지(select-none)를 추가하여 터치 시 쾌적함 극대화 */
     body { font-family: 'Noto Sans KR', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
     
     .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
@@ -32,34 +31,35 @@
     }
   </style>
 </head>
-<body class="h-[100dvh] flex flex-col bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-slate-800 overflow-hidden">
+<body class="h-[100dvh] w-screen flex flex-col bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-slate-800 overflow-hidden">
 
-  <main class="flex-1 w-full max-w-6xl mx-auto flex flex-col p-3 md:p-6 overflow-hidden">
+  <main class="flex-1 w-full max-w-6xl mx-auto flex flex-col p-2 md:p-4 overflow-hidden min-h-0">
     
     <header class="flex-shrink-0 w-full flex items-center justify-between gap-2 mb-2 md:mb-4 h-10 md:h-12 relative">
-      <h1 class="text-2xl sm:text-3xl md:text-5xl font-black text-blue-600 tracking-tight drop-shadow-sm flex-grow">
+      <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-blue-600 tracking-tight drop-shadow-sm flex-grow">
         ✨ 유의어 터치 게임
       </h1>
-      <button id="restart-btn" onclick="startGame()" class="hidden flex-shrink-0 rounded-full px-4 py-2 text-sm md:text-xl font-bold bg-blue-100 text-blue-700 active:scale-95 transition-transform">
+      <button id="restart-btn" onclick="startGame()" class="hidden flex-shrink-0 rounded-full px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-lg font-bold bg-blue-100 text-blue-700 active:scale-95 transition-transform">
         🔄 다시 시작
       </button>
     </header>
 
-    <div class="flex-1 grid gap-4 lg:gap-8 xl:grid-cols-[1fr_300px] min-h-0">
+    <div class="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
       
-      <div class="flex flex-col gap-3 md:gap-5 w-full h-full min-h-0">
+      <div class="flex flex-col gap-2 md:gap-4 w-full h-full min-h-0">
+        
         <div class="flex-shrink-0 grid grid-cols-3 gap-2 md:gap-4">
-          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-4 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-            <span class="text-[10px] md:text-sm lg:text-base font-bold text-slate-400 mb-1">⏰ 남은 시간</span>
-            <span id="ui-time" class="text-2xl md:text-4xl lg:text-5xl font-black text-rose-500">60초</span>
+          <div class="rounded-2xl bg-white p-2 md:p-3 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-[10px] md:text-sm font-bold text-slate-400 mb-0.5">⏰ 남은 시간</span>
+            <span id="ui-time" class="text-xl md:text-3xl lg:text-4xl font-black text-rose-500">60초</span>
           </div>
-          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-4 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-            <span class="text-[10px] md:text-sm lg:text-base font-bold text-slate-400 mb-1">🏆 맞힌 개수</span>
-            <span id="ui-score" class="text-2xl md:text-4xl lg:text-5xl font-black text-amber-500">0개</span>
+          <div class="rounded-2xl bg-white p-2 md:p-3 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-[10px] md:text-sm font-bold text-slate-400 mb-0.5">🏆 맞힌 개수</span>
+            <span id="ui-score" class="text-xl md:text-3xl lg:text-4xl font-black text-amber-500">0개</span>
           </div>
-          <div class="rounded-2xl md:rounded-3xl bg-white p-2 md:p-4 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-            <span class="text-[10px] md:text-sm lg:text-base font-bold text-slate-400 mb-1">🔥 연속 정답</span>
-            <span id="ui-streak" class="text-2xl md:text-4xl lg:text-5xl font-black text-emerald-500">0</span>
+          <div class="rounded-2xl bg-white p-2 md:p-3 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-[10px] md:text-sm font-bold text-slate-400 mb-0.5">🔥 연속 정답</span>
+            <span id="ui-streak" class="text-xl md:text-3xl lg:text-4xl font-black text-emerald-500">0</span>
           </div>
         </div>
 
@@ -67,83 +67,83 @@
           <div id="ui-progress" class="h-full bg-blue-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
         </div>
 
-        <div class="flex-1 rounded-[1.5rem] md:rounded-[2.5rem] border-4 border-white shadow-xl bg-white/90 backdrop-blur-md p-4 md:p-8 flex flex-col justify-between min-h-0">
+        <div class="flex-1 rounded-2xl md:rounded-[2rem] border-4 border-white shadow-xl bg-white/90 backdrop-blur-md p-3 md:p-6 flex flex-col justify-between min-h-0">
           
-          <div id="game-area" class="hidden flex-col h-full justify-between min-h-0">
-            <div class="flex-shrink-0 text-center mt-2">
-              <p class="mb-1 md:mb-2 lg:mb-4 text-sm md:text-xl lg:text-2xl font-bold text-blue-400">이 낱말과 뜻이 비슷한 유의어는?</p>
-              <div id="current-word" class="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-slate-800 pop-in py-2">단어</div>
+          <div id="game-area" class="hidden flex-col h-full min-h-0">
+            <div class="flex-shrink-0 text-center mb-2 md:mb-4">
+              <p class="text-xs md:text-lg font-bold text-blue-400 mb-1 md:mb-2">이 낱말과 뜻이 비슷한 유의어는?</p>
+              <div id="current-word" class="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-800 pop-in py-1 md:py-2">단어</div>
             </div>
 
-            <div id="choices-area" class="flex-1 grid grid-cols-2 gap-3 md:gap-5 mt-4 md:mt-6 mb-2 min-h-0">
+            <div id="choices-area" class="flex-1 grid grid-cols-2 grid-rows-2 gap-2 md:gap-4 min-h-0">
               </div>
             
-            <p id="feedback-msg" class="flex-shrink-0 text-center text-sm md:text-xl lg:text-2xl font-bold h-6 md:h-8 transition-opacity"></p>
+            <p id="feedback-msg" class="flex-shrink-0 text-center text-sm md:text-xl font-bold h-6 md:h-8 mt-2 transition-opacity"></p>
           </div>
 
           <div id="waiting-area" class="text-center m-auto flex flex-col items-center justify-center">
-            <button onclick="startGame()" class="rounded-full px-12 py-5 md:px-20 md:py-8 text-3xl md:text-5xl font-black bg-blue-500 text-white shadow-[0_10px_25px_rgba(59,130,246,0.4)] transition-transform active:scale-95 hover:bg-blue-600 tracking-wide border-4 border-blue-400">
+            <button onclick="startGame()" class="rounded-full px-12 py-4 md:px-20 md:py-6 text-2xl md:text-4xl font-black bg-blue-500 text-white shadow-[0_10px_25px_rgba(59,130,246,0.4)] transition-transform active:scale-95 hover:bg-blue-600 tracking-wide border-4 border-blue-400">
               게임 시작
             </button>
           </div>
         </div>
       </div>
 
-      <div class="hidden xl:flex flex-col gap-6 h-full">
-        <div class="rounded-3xl border-4 border-white shadow-xl bg-white/90 p-8 flex-grow">
-          <h2 class="text-3xl font-bold text-slate-700 mb-6 border-b-2 border-slate-100 pb-4">📝 게임 방법</h2>
-          <div class="space-y-6 text-xl font-medium text-slate-600">
-            <p class="flex items-start gap-3"><span class="text-2xl">1️⃣</span> <span>가운데 나타난 낱말을 읽어보세요.</span></p>
-            <p class="flex items-start gap-3"><span class="text-2xl">2️⃣</span> <span>4개의 보기 중에서 뜻이 비슷한 <b>'유의어'</b>를 터치하세요.</span></p>
-            <p class="flex items-start gap-3"><span class="text-2xl">3️⃣</span> <span>60초 동안 최대한 많이 찾아보세요!</span></p>
+      <div class="hidden xl:flex flex-col w-[300px] h-full flex-shrink-0">
+        <div class="rounded-3xl border-4 border-white shadow-xl bg-white/90 p-6 flex-grow flex flex-col">
+          <h2 class="text-2xl font-bold text-slate-700 mb-4 border-b-2 border-slate-100 pb-3">📝 게임 방법</h2>
+          <div class="space-y-4 text-base font-medium text-slate-600">
+            <p class="flex items-start gap-2"><span class="text-xl">1️⃣</span> <span>가운데 나타난 낱말을 읽어보세요.</span></p>
+            <p class="flex items-start gap-2"><span class="text-xl">2️⃣</span> <span>4개의 보기 중에서 뜻이 비슷한 <b>'유의어'</b>를 터치하세요.</span></p>
+            <p class="flex items-start gap-2"><span class="text-xl">3️⃣</span> <span>60초 동안 최대한 많이 찾아보세요!</span></p>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <footer class="flex-shrink-0 w-full bg-slate-200 text-slate-500 py-3 md:py-4 px-4 border-t-4 border-slate-300 z-10">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+  <footer class="flex-shrink-0 w-full bg-slate-200 text-slate-500 py-2 md:py-3 px-3 md:px-4 border-t-4 border-slate-300 z-10">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
       <div class="text-xs md:text-sm font-semibold text-center sm:text-left">
         <span class="text-slate-600 flex items-center justify-center sm:justify-start gap-2">📂 선생님 단어장 설정</span>
       </div>
       <div class="flex flex-row gap-2 w-full sm:w-auto justify-center">
-        <button onclick="downloadTemplate()" class="rounded-lg border-2 border-slate-400 px-3 py-1.5 text-xs md:text-sm font-bold hover:bg-slate-300 transition-colors">
+        <button onclick="downloadTemplate()" class="rounded-lg border-2 border-slate-400 px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-bold hover:bg-slate-300 transition-colors">
           📥 양식 다운로드
         </button>
-        <input type="file" id="file-input" accept=".csv" class="block w-48 md:w-auto text-xs md:text-sm file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-white file:text-slate-600 hover:file:bg-slate-50 cursor-pointer" onchange="handleFileUpload(event)" />
+        <input type="file" id="file-input" accept=".csv" class="block w-48 md:w-auto text-[10px] md:text-xs file:mr-2 file:py-1 md:file:py-1.5 file:px-2 md:file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-white file:text-slate-600 hover:file:bg-slate-50 cursor-pointer" onchange="handleFileUpload(event)" />
       </div>
     </div>
-    <p id="upload-msg" class="text-center mt-2 text-xs md:text-sm font-bold hidden max-w-6xl mx-auto bg-white p-2 rounded-lg"></p>
+    <p id="upload-msg" class="text-center mt-1 text-xs font-bold hidden max-w-6xl mx-auto bg-white p-1.5 rounded-lg"></p>
   </footer>
 
   <div id="game-over-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-in">
-    <div class="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden text-center border-4 md:border-8 border-blue-400 flex flex-col max-h-[90dvh]">
-      <div class="bg-blue-500 text-white py-6 md:py-8 flex-shrink-0">
-        <h2 class="text-3xl md:text-6xl font-black tracking-tight text-yellow-300 drop-shadow-md">🎉 게임 종료!</h2>
+    <div class="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-md md:max-w-xl overflow-hidden text-center border-4 md:border-8 border-blue-400 flex flex-col max-h-[90dvh]">
+      <div class="bg-blue-500 text-white py-4 md:py-6 flex-shrink-0">
+        <h2 class="text-2xl md:text-5xl font-black tracking-tight text-yellow-300 drop-shadow-md">🎉 게임 종료!</h2>
       </div>
-      <div class="p-6 md:p-12 space-y-6 md:space-y-8 overflow-y-auto">
-        <p class="text-xl md:text-3xl font-bold text-slate-600">
+      <div class="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto">
+        <p class="text-lg md:text-2xl font-bold text-slate-600">
           60초 동안 무려 <br class="hidden md:block" />
-          <span id="final-score" class="text-5xl md:text-7xl font-black text-blue-600">0</span><span class="text-2xl md:text-4xl">개의 유의어를 찾았어요!</span>
+          <span id="final-score" class="text-4xl md:text-6xl font-black text-blue-600">0</span><span class="text-xl md:text-3xl">개의 유의어를 찾았어요!</span>
         </p>
         
-        <div class="grid grid-cols-2 gap-3 md:gap-4">
-          <div class="bg-slate-50 p-3 md:p-4 rounded-2xl md:rounded-3xl border-2 border-slate-100">
-            <p class="text-xs md:text-lg text-slate-400 font-bold mb-1">최고 연속 정답</p>
-            <p class="text-2xl md:text-4xl font-black text-emerald-500"><span id="final-best-streak">0</span>번</p>
+        <div class="grid grid-cols-2 gap-2 md:gap-4">
+          <div class="bg-slate-50 p-2 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100">
+            <p class="text-[10px] md:text-sm text-slate-400 font-bold mb-1">최고 연속 정답</p>
+            <p class="text-xl md:text-3xl font-black text-emerald-500"><span id="final-best-streak">0</span>번</p>
           </div>
-          <div class="bg-slate-50 p-3 md:p-4 rounded-2xl md:rounded-3xl border-2 border-slate-100">
-            <p class="text-xs md:text-lg text-slate-400 font-bold mb-1">정답 정확도</p>
-            <p class="text-2xl md:text-4xl font-black text-rose-500"><span id="final-accuracy">0</span>%</p>
+          <div class="bg-slate-50 p-2 md:p-4 rounded-xl md:rounded-2xl border-2 border-slate-100">
+            <p class="text-[10px] md:text-sm text-slate-400 font-bold mb-1">정답 정확도</p>
+            <p class="text-xl md:text-3xl font-black text-rose-500"><span id="final-accuracy">0</span>%</p>
           </div>
         </div>
 
-        <div class="flex gap-3 md:gap-4 mt-4">
-          <button onclick="startGame()" class="flex-1 rounded-2xl md:rounded-full py-4 md:py-6 text-lg md:text-3xl font-bold bg-amber-400 text-amber-900 shadow-xl transition-transform active:scale-95">
+        <div class="flex gap-2 md:gap-4 mt-2 md:mt-4">
+          <button onclick="startGame()" class="flex-1 rounded-xl md:rounded-full py-3 md:py-4 text-base md:text-2xl font-bold bg-amber-400 text-amber-900 shadow-xl transition-transform active:scale-95">
             🔄 다시 도전
           </button>
-          <button onclick="goToHome()" class="flex-1 rounded-2xl md:rounded-full py-4 md:py-6 text-lg md:text-3xl font-bold bg-slate-200 text-slate-700 shadow-xl transition-transform active:scale-95 hover:bg-slate-300">
+          <button onclick="goToHome()" class="flex-1 rounded-xl md:rounded-full py-3 md:py-4 text-base md:text-2xl font-bold bg-slate-200 text-slate-700 shadow-xl transition-transform active:scale-95 hover:bg-slate-300">
             🏠 처음으로
           </button>
         </div>
@@ -267,10 +267,10 @@
           wordBank = newWordBank;
           usedIndices = []; 
           
-          msgEl.className = "text-center mt-2 text-xs md:text-sm font-bold block max-w-6xl mx-auto p-2 rounded-lg bg-emerald-100 text-emerald-700";
+          msgEl.className = "text-center mt-1 text-xs md:text-sm font-bold block max-w-6xl mx-auto p-1.5 rounded-lg bg-emerald-100 text-emerald-700";
           msgEl.innerText = `✅ 성공! 새로운 단어장이 적용되었습니다.`;
         } catch (error) {
-          msgEl.className = "text-center mt-2 text-xs md:text-sm font-bold block max-w-6xl mx-auto p-2 rounded-lg bg-rose-100 text-rose-700";
+          msgEl.className = "text-center mt-1 text-xs md:text-sm font-bold block max-w-6xl mx-auto p-1.5 rounded-lg bg-rose-100 text-rose-700";
           msgEl.innerText = `⚠️ 단어장 오류: 양식을 다시 확인해 주세요.`;
         }
       };
@@ -355,8 +355,8 @@
       choicesArea.innerHTML = '';
       currentRound.choices.forEach((choice) => {
         const btn = document.createElement('button');
-        /* h-full과 flex-1 구조를 이용해 버튼이 위아래 공간을 꽉 채우도록 수정 */
-        btn.className = "w-full h-full min-h-[70px] md:min-h-[100px] lg:min-h-[120px] rounded-2xl md:rounded-[2rem] border-4 border-slate-200 bg-white text-slate-700 text-2xl md:text-4xl lg:text-5xl font-bold shadow-sm transition-transform active:scale-95 active:bg-slate-100 flex items-center justify-center break-keep leading-tight";
+        // 높이를 100% (h-full) 채우도록 하여 상하 공간에 딱 맞게 자동 조절
+        btn.className = "w-full h-full rounded-2xl md:rounded-3xl border-4 border-slate-200 bg-white text-slate-700 text-xl md:text-3xl lg:text-4xl font-bold shadow-sm transition-transform active:scale-95 active:bg-slate-100 flex items-center justify-center break-keep leading-tight";
         btn.innerText = choice.text;
         btn.onclick = () => handleChoice(choice, btn);
         choicesArea.appendChild(btn);
@@ -382,12 +382,12 @@
         streak++;
         if (streak > bestStreak) bestStreak = streak;
         
-        btnElement.className = "w-full h-full min-h-[70px] md:min-h-[100px] lg:min-h-[120px] rounded-2xl md:rounded-[2rem] border-4 border-emerald-400 bg-emerald-100 text-emerald-800 text-2xl md:text-4xl lg:text-5xl font-bold shadow-sm transition-transform flex items-center justify-center break-keep leading-tight";
-        feedbackMsg.className = "text-center text-sm md:text-xl lg:text-2xl font-bold h-6 md:h-8 transition-opacity text-emerald-500";
+        btnElement.className = "w-full h-full rounded-2xl md:rounded-3xl border-4 border-emerald-400 bg-emerald-100 text-emerald-800 text-xl md:text-3xl lg:text-4xl font-bold shadow-sm transition-transform flex items-center justify-center break-keep leading-tight";
+        feedbackMsg.className = "text-center text-sm md:text-xl font-bold h-6 md:h-8 transition-opacity text-emerald-500";
         feedbackMsg.innerText = "🎉 딩동댕! 잘했어요!";
       } else {
         streak = 0;
-        btnElement.className = "w-full h-full min-h-[70px] md:min-h-[100px] lg:min-h-[120px] rounded-2xl md:rounded-[2rem] border-4 border-rose-400 bg-rose-100 text-rose-800 text-2xl md:text-4xl lg:text-5xl font-bold shadow-sm transition-transform flex items-center justify-center break-keep leading-tight";
+        btnElement.className = "w-full h-full rounded-2xl md:rounded-3xl border-4 border-rose-400 bg-rose-100 text-rose-800 text-xl md:text-3xl lg:text-4xl font-bold shadow-sm transition-transform flex items-center justify-center break-keep leading-tight";
         
         document.getElementById('current-word').classList.add('shake');
         setTimeout(() => document.getElementById('current-word').classList.remove('shake'), 400);
@@ -399,7 +399,7 @@
             b.classList.add('border-emerald-400', 'bg-emerald-100', 'text-emerald-800');
           }
         }
-        feedbackMsg.className = "text-center text-sm md:text-xl lg:text-2xl font-bold h-6 md:h-8 transition-opacity text-rose-500";
+        feedbackMsg.className = "text-center text-sm md:text-xl font-bold h-6 md:h-8 transition-opacity text-rose-500";
         feedbackMsg.innerText = `앗! 정답은 '${currentRound.answer}'입니다.`;
       }
 
