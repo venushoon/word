@@ -2,132 +2,156 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>유의어 터치 게임</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
-    body { font-family: 'Noto Sans KR', sans-serif; }
-    .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f5f9; }
+    
+    /* 팝업 및 등장 애니메이션 */
+    .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    .modal-in { animation: fadeIn 0.3s ease-out forwards; }
+    
     @keyframes popIn {
-      0% { opacity: 0; transform: scale(0.8); }
-      100% { opacity: 1; transform: scale(1); }
+      0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
     }
-    .btn-click { transform: scale(0.95); transition: transform 0.1s; }
+    @keyframes fadeIn {
+      0% { opacity: 0; backdrop-filter: blur(0px); }
+      100% { opacity: 1; backdrop-filter: blur(8px); }
+    }
+
+    /* 버튼 터치(클릭) 애니메이션 */
+    .btn-click { transform: scale(0.92) !important; transition: transform 0.1s; }
+    
+    /* 정답/오답 흔들림 효과 */
+    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-blue-100 p-4 md:p-8 text-slate-800">
+<body class="min-h-[100dvh] flex flex-col justify-between bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-slate-800">
 
-  <div class="mx-auto max-w-5xl space-y-6">
-
-    <div id="teacher-panel" class="rounded-[2rem] border-4 border-dashed border-blue-300 bg-white/70 shadow-md p-6 pop-in">
-      <h2 class="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2">📂 선생님 단어장 관리 (CSV 파일 업로드)</h2>
-      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <button onclick="downloadTemplate()" class="rounded-xl border-2 border-blue-400 text-blue-600 px-4 py-2 font-bold hover:bg-blue-50 transition-colors">
-          📥 단어장 기본 양식 다운로드
-        </button>
-        <input type="file" id="file-input" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" onchange="handleFileUpload(event)" />
+  <main class="flex-grow flex flex-col items-center justify-center p-4 md:p-8 w-full max-w-7xl mx-auto">
+    
+    <header class="w-full flex flex-col md:flex-row items-center justify-between gap-4 mb-6 md:mb-10">
+      <div class="text-center md:text-left">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-blue-600 tracking-tight drop-shadow-sm">✨ 유의어 터치 게임</h1>
+        <p id="word-count-info" class="mt-2 text-lg md:text-xl font-semibold text-slate-500">현재 준비된 유의어: 50개</p>
       </div>
-      <p id="upload-msg" class="mt-4 text-sm font-bold hidden px-3 py-2 rounded-lg"></p>
-      <p class="mt-2 text-sm text-slate-500">※ 다운로드한 양식을 엑셀에서 열어 수정한 뒤, <b>[파일] - [다른 이름으로 저장] - [CSV (쉼표로 분리)]</b>로 저장해서 업로드해주세요.</p>
-    </div>
+      <button id="start-btn" onclick="startGame()" class="w-full md:w-auto rounded-full px-8 py-4 md:px-10 md:py-5 text-xl md:text-2xl font-bold bg-blue-500 hover:bg-blue-600 text-white shadow-xl hover:scale-105 transition-all active:scale-95">
+        🚀 게임 시작
+      </button>
+    </header>
 
-    <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <div class="rounded-[2rem] border-4 border-white shadow-2xl bg-white/90 backdrop-blur-sm p-6 pop-in">
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-          <div>
-            <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight">✨ 비슷한 말 찾기 게임 ✨</h1>
-            <p id="word-count-info" class="mt-2 text-base font-medium text-slate-600">현재 50개의 낱말이 준비되어 있어요!</p>
+    <div class="w-full grid gap-6 lg:gap-10 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_350px]">
+      
+      <div class="flex flex-col gap-6 w-full">
+        <div class="grid grid-cols-3 gap-3 md:gap-6">
+          <div class="rounded-3xl bg-white p-3 md:p-5 shadow-md border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-xs md:text-base font-bold text-slate-400 mb-1">⏰ 남은 시간</span>
+            <span id="ui-time" class="text-2xl md:text-4xl lg:text-5xl font-black text-rose-500">60초</span>
           </div>
-          <button id="start-btn" onclick="startGame()" class="rounded-2xl px-6 py-4 text-lg font-bold bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:scale-105 transition-transform">
-            🚀 게임 시작
-          </button>
-        </div>
-
-        <div class="grid gap-4 md:grid-cols-3 mb-6">
-          <div class="rounded-3xl bg-white p-4 shadow-sm border-2 border-slate-100 flex flex-col items-center justify-center text-center">
-            <div class="mb-1 flex items-center gap-2 text-slate-500 font-bold"><span class="text-xl">⏰</span><span class="text-sm">남은 시간</span></div>
-            <div id="ui-time" class="text-3xl font-black tracking-tight text-rose-500">60초</div>
+          <div class="rounded-3xl bg-white p-3 md:p-5 shadow-md border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-xs md:text-base font-bold text-slate-400 mb-1">🏆 맞힌 개수</span>
+            <span id="ui-score" class="text-2xl md:text-4xl lg:text-5xl font-black text-amber-500">0개</span>
           </div>
-          <div class="rounded-3xl bg-white p-4 shadow-sm border-2 border-slate-100 flex flex-col items-center justify-center text-center">
-            <div class="mb-1 flex items-center gap-2 text-slate-500 font-bold"><span class="text-xl">🏆</span><span class="text-sm">맞힌 개수</span></div>
-            <div id="ui-score" class="text-3xl font-black tracking-tight text-amber-500">0개</div>
-          </div>
-          <div class="rounded-3xl bg-white p-4 shadow-sm border-2 border-slate-100 flex flex-col items-center justify-center text-center">
-            <div class="mb-1 flex items-center gap-2 text-slate-500 font-bold"><span class="text-xl">🎯</span><span class="text-sm">정확도</span></div>
-            <div id="ui-accuracy" class="text-3xl font-black tracking-tight text-emerald-500">0%</div>
+          <div class="rounded-3xl bg-white p-3 md:p-5 shadow-md border border-slate-100 flex flex-col items-center justify-center">
+            <span class="text-xs md:text-base font-bold text-slate-400 mb-1">🔥 연속 정답</span>
+            <span id="ui-streak" class="text-2xl md:text-4xl lg:text-5xl font-black text-emerald-500">0</span>
           </div>
         </div>
 
-        <div class="mb-6 h-4 w-full bg-slate-200 rounded-full overflow-hidden">
+        <div class="h-3 md:h-5 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
           <div id="ui-progress" class="h-full bg-blue-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
         </div>
 
-        <div id="game-area" class="hidden">
-          <div class="rounded-[2rem] bg-gradient-to-r from-blue-50 to-indigo-50 p-8 text-center border-4 border-blue-100 shadow-inner mb-6 pop-in">
-            <p class="mb-3 text-base font-bold text-blue-400">이 낱말과 비슷한 말은?</p>
-            <div id="current-word" class="text-5xl font-black tracking-tight text-slate-800 md:text-6xl pop-in">단어</div>
-          </div>
-
-          <div id="choices-area" class="grid gap-4 sm:grid-cols-2 mb-6">
+        <div class="rounded-[2rem] md:rounded-[3rem] border-4 border-white shadow-2xl bg-white/80 backdrop-blur-md p-6 md:p-10 lg:p-14 relative flex-grow flex flex-col justify-center">
+          
+          <div id="game-area" class="hidden flex-col h-full justify-center">
+            <div class="text-center mb-8 md:mb-12">
+              <p class="mb-2 md:mb-4 text-lg md:text-2xl font-bold text-blue-400">이 낱말과 뜻이 비슷한 유의어는?</p>
+              <div id="current-word" class="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight text-slate-800 pop-in">단어</div>
             </div>
 
-          <div class="flex min-h-[50px] items-center justify-center rounded-2xl bg-slate-50">
-            <p id="feedback-msg" class="text-xl font-bold text-slate-700 pop-in hidden"></p>
-            <p id="feedback-guide" class="text-base font-medium text-slate-400">정답을 고르면 다음 문제로 넘어갑니다!</p>
+            <div id="choices-area" class="grid gap-4 md:gap-6 sm:grid-cols-2 mt-auto">
+              </div>
+            
+            <p id="feedback-msg" class="text-center mt-6 text-xl md:text-2xl font-bold h-8 transition-opacity"></p>
           </div>
-        </div>
 
-        <div id="waiting-area" class="text-center py-12 text-slate-500 font-medium text-lg border-4 border-dashed rounded-3xl border-slate-200">
-          위의 <span class="text-blue-500 font-bold">게임 시작</span> 버튼을 눌러주세요!
+          <div id="waiting-area" class="text-center py-20 flex flex-col items-center justify-center">
+            <span class="text-6xl md:text-8xl mb-6">🎮</span>
+            <p class="text-xl md:text-3xl text-slate-500 font-bold">위에 있는 <span class="text-blue-500">게임 시작</span> 버튼을 눌러주세요!</p>
+          </div>
         </div>
       </div>
 
-      <div class="space-y-6">
-        <div class="rounded-[2rem] border-4 border-white shadow-xl bg-white/90 p-6 pop-in">
-          <h2 class="text-2xl font-bold text-slate-700 mb-4">📊 내 기록</h2>
-          <div class="space-y-4 font-semibold">
-            <div class="flex items-center justify-between rounded-2xl bg-orange-50 p-4 border-2 border-orange-100">
-              <span class="text-orange-800">🔥 현재 연속 정답</span>
-              <span id="ui-streak" class="rounded-full px-4 py-1 text-base bg-orange-500 text-white">0</span>
-            </div>
-            <div class="flex items-center justify-between rounded-2xl bg-indigo-50 p-4 border-2 border-indigo-100">
-              <span class="text-indigo-800">👑 최고 연속 정답</span>
-              <span id="ui-best-streak" class="rounded-full px-4 py-1 text-base bg-indigo-500 text-white">0</span>
-            </div>
-            <div class="flex items-center justify-between rounded-2xl bg-slate-50 p-4 border-2 border-slate-100">
-              <span class="text-slate-600">도전 횟수</span>
-              <span id="ui-attempts" class="rounded-full px-4 py-1 text-base bg-slate-400 text-white">0</span>
-            </div>
+      <div class="flex flex-col gap-6 lg:h-full">
+        <div class="rounded-3xl border-4 border-white shadow-xl bg-white/90 p-6 md:p-8 flex-grow">
+          <h2 class="text-2xl md:text-3xl font-bold text-slate-700 mb-6 border-b-2 border-slate-100 pb-4">📝 게임 방법</h2>
+          <div class="space-y-4 md:space-y-6 text-base md:text-xl font-medium text-slate-600">
+            <p class="flex items-start gap-3"><span class="text-2xl">1️⃣</span> <span>가운데 나타난 낱말을 소리 내어 읽어보세요.</span></p>
+            <p class="flex items-start gap-3"><span class="text-2xl">2️⃣</span> <span>4개의 보기 중에서 뜻이 가장 비슷한 <b>'유의어'</b>를 찾아 터치하세요.</span></p>
+            <p class="flex items-start gap-3"><span class="text-2xl">3️⃣</span> <span>60초 동안 최대한 많은 유의어를 찾아 신기록을 세워보세요!</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="w-full bg-slate-200 text-slate-500 py-6 px-4 border-t-4 border-slate-300">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="text-sm font-semibold">
+        <span class="text-slate-600 text-base flex items-center gap-2">📂 선생님 단어장 설정 (CSV)</span>
+        <p class="mt-1 opacity-80">파일을 업로드하면 자동으로 새 단어장이 적용됩니다.</p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <button onclick="downloadTemplate()" class="rounded-lg border-2 border-slate-400 px-4 py-2 text-sm font-bold hover:bg-slate-300 transition-colors">
+          📥 양식 다운로드
+        </button>
+        <input type="file" id="file-input" accept=".csv" class="block text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-bold file:bg-white file:text-slate-600 hover:file:bg-slate-50 cursor-pointer" onchange="handleFileUpload(event)" />
+      </div>
+    </div>
+    <p id="upload-msg" class="text-center mt-3 text-sm font-bold hidden max-w-5xl mx-auto bg-white p-2 rounded-lg"></p>
+  </footer>
+
+  <div id="game-over-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-in">
+    <div class="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden text-center border-8 border-blue-400">
+      <div class="bg-blue-500 text-white py-8">
+        <h2 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-yellow-300 drop-shadow-md">🎉 게임 종료!</h2>
+      </div>
+      <div class="p-8 md:p-12 space-y-6 md:space-y-8">
+        <p class="text-2xl md:text-3xl font-bold text-slate-600">
+          60초 동안 무려 <br class="md:hidden" />
+          <span id="final-score" class="text-5xl md:text-7xl font-black text-blue-600">0</span><span class="text-3xl md:text-4xl">개의 유의어를 찾았어요!</span>
+        </p>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100">
+            <p class="text-sm md:text-lg text-slate-400 font-bold mb-1">최고 연속 정답</p>
+            <p class="text-3xl md:text-4xl font-black text-emerald-500"><span id="final-best-streak">0</span>번</p>
+          </div>
+          <div class="bg-slate-50 p-4 rounded-3xl border-2 border-slate-100">
+            <p class="text-sm md:text-lg text-slate-400 font-bold mb-1">정답 정확도</p>
+            <p class="text-3xl md:text-4xl font-black text-rose-500"><span id="final-accuracy">0</span>%</p>
           </div>
         </div>
 
-        <div class="rounded-[2rem] border-4 border-white shadow-xl bg-white/90 p-6 pop-in">
-          <h2 class="text-2xl font-bold text-slate-700 mb-4">🎮 게임 방법</h2>
-          <div class="space-y-3 text-base font-medium leading-relaxed text-slate-600">
-            <p>1️⃣ 크게 적힌 낱말을 읽어보세요.</p>
-            <p>2️⃣ 4개의 보기 중 가장 비슷한 뜻을 가진 낱말을 터치해요.</p>
-            <p>3️⃣ 60초 안에 최대한 많이 맞춰서 신기록을 세워보세요!</p>
-          </div>
-        </div>
-
-        <div id="game-over-area" class="hidden rounded-[2rem] border-4 border-blue-500 bg-slate-800 text-white shadow-2xl p-6 pop-in">
-          <h2 class="text-3xl font-bold text-yellow-400 mb-4">🎉 게임 종료!</h2>
-          <p class="text-xl font-bold mb-4">1분 동안 무려 <span id="final-score" class="text-yellow-400 text-3xl">0</span>개의 단어를 맞혔어요!</p>
-          <div class="bg-slate-700 p-4 rounded-2xl space-y-2 text-slate-200 mb-6 font-bold">
-            <p>✨ 정확도: <span id="final-accuracy">0</span>%</p>
-            <p>🔥 최고 연속 정답: <span id="final-best-streak">0</span>번</p>
-          </div>
-          <button onclick="startGame()" class="w-full rounded-2xl py-4 text-lg font-bold bg-white text-slate-800 hover:bg-slate-200 transition-colors">
-            한 번 더 도전하기!
-          </button>
-        </div>
+        <button onclick="startGame()" class="w-full rounded-full py-5 md:py-6 text-2xl md:text-3xl font-bold bg-amber-400 text-amber-900 hover:bg-amber-300 shadow-xl transition-transform active:scale-95">
+          🔄 다시 도전하기
+        </button>
       </div>
     </div>
   </div>
 
   <script>
-    // 샘플 데이터 (CSV 형태)
+    // 50개 기본 단어 데이터
     const SAMPLE_CSV_DATA = `제시어,정답,오답1,오답2,오답3,오답4,오답5
 기쁘다,즐겁다,슬프다,아프다,밉다,느리다,어둡다
 슬프다,서운하다,기쁘다,신나다,가볍다,따뜻하다,빠르다
@@ -183,7 +207,6 @@
     const GAME_TIME = 60;
     const CHOICES_PER_ROUND = 4;
 
-    // 상태 변수들
     let wordBank = [];
     let timeLeft = GAME_TIME;
     let started = false;
@@ -197,18 +220,14 @@
     let timerInterval = null;
     let isChoiceLocked = false;
 
-    // 초기 CSV 파싱
+    // CSV 파싱
     function parseCSV(csvText) {
       const lines = csvText.split("\n").map(line => line.trim()).filter(line => line);
       const words = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(",").map(c => c.trim());
         if (cols.length >= 3) {
-          words.push({
-            word: cols[0],
-            correct: cols[1],
-            wrong: cols.slice(2).filter(w => w !== "")
-          });
+          words.push({ word: cols[0], correct: cols[1], wrong: cols.slice(2).filter(w => w !== "") });
         }
       }
       return words;
@@ -224,11 +243,10 @@
       return copied;
     }
 
-    // 초기 데이터 로드
+    // 초기 설정
     wordBank = parseCSV(SAMPLE_CSV_DATA);
-    document.getElementById('word-count-info').innerText = `현재 ${wordBank.length}개의 낱말이 준비되어 있어요!`;
+    document.getElementById('word-count-info').innerText = `현재 준비된 유의어: ${wordBank.length}개`;
 
-    // 엑셀 다운로드
     function downloadTemplate() {
       const blob = new Blob(["\uFEFF" + SAMPLE_CSV_DATA], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
@@ -237,7 +255,6 @@
       link.click();
     }
 
-    // 엑셀 업로드
     function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -248,35 +265,26 @@
       reader.onload = function(e) {
         try {
           const text = e.target.result;
-          const lines = text.split("\n").map(l => l.trim()).filter(l => l);
-          if (lines.length < 2) throw new Error("데이터가 너무 적거나 텅 빈 파일입니다.");
-          
-          const headers = lines[0].split(",");
-          if (!headers[0].includes("제시어") || !headers[1].includes("정답")) {
-            throw new Error("첫 번째 줄(제목)이 양식과 다릅니다. 양식을 다시 확인해주세요.");
-          }
-
           const newWordBank = parseCSV(text);
-          if (newWordBank.length < 5) throw new Error("게임을 진행하려면 최소 5개 이상의 단어가 필요합니다.");
+          if (newWordBank.length < 5) throw new Error("최소 5개 이상의 단어가 필요합니다.");
 
           wordBank = newWordBank;
-          document.getElementById('word-count-info').innerText = `현재 ${wordBank.length}개의 낱말이 준비되어 있어요!`;
+          document.getElementById('word-count-info').innerText = `현재 준비된 유의어: ${wordBank.length}개`;
           
-          msgEl.className = "mt-4 text-sm font-bold block px-3 py-2 rounded-lg bg-emerald-50 text-emerald-600";
-          msgEl.innerText = `✅ 성공! 총 ${wordBank.length}개의 단어장을 불러왔습니다.`;
+          msgEl.className = "text-center mt-3 text-sm font-bold block max-w-5xl mx-auto p-2 rounded-lg bg-emerald-100 text-emerald-700";
+          msgEl.innerText = `✅ 성공! 새로운 단어장(${wordBank.length}개)이 완벽하게 적용되었습니다.`;
         } catch (error) {
-          msgEl.className = "mt-4 text-sm font-bold block px-3 py-2 rounded-lg bg-rose-50 text-rose-500";
-          msgEl.innerText = `⚠️ ${error.message}`;
+          msgEl.className = "text-center mt-3 text-sm font-bold block max-w-5xl mx-auto p-2 rounded-lg bg-rose-100 text-rose-700";
+          msgEl.innerText = `⚠️ 단어장 오류: 양식을 다시 확인해 주세요.`;
         }
       };
       reader.readAsText(file, "utf-8");
     }
 
-    // 라운드 만들기
     function buildRound() {
       let availableIndices = wordBank.map((_, i) => i).filter(i => !usedIndices.includes(i));
       if (availableIndices.length === 0) {
-        usedIndices = []; // 모든 단어를 다 썼으면 초기화
+        usedIndices = [];
         availableIndices = wordBank.map((_, i) => i);
       }
 
@@ -295,7 +303,6 @@
       return { word: entry.word, answer: entry.correct, choices };
     }
 
-    // 게임 시작
     function startGame() {
       clearInterval(timerInterval);
       timeLeft = GAME_TIME;
@@ -308,10 +315,11 @@
       isChoiceLocked = false;
       usedIndices = [];
 
-      document.getElementById('teacher-panel').style.display = 'none';
-      document.getElementById('waiting-area').style.display = 'none';
-      document.getElementById('game-area').style.display = 'block';
-      document.getElementById('game-over-area').style.display = 'none';
+      // 모달 닫기 및 화면 전환
+      document.getElementById('game-over-modal').classList.add('hidden');
+      document.getElementById('waiting-area').classList.add('hidden');
+      document.getElementById('game-area').classList.remove('hidden');
+      document.getElementById('game-area').classList.add('flex');
       document.getElementById('start-btn').innerText = '🔄 다시 시작';
       
       updateStats();
@@ -328,59 +336,58 @@
       }, 1000);
     }
 
-    // 다음 문제
     function nextRound() {
       currentRound = buildRound();
       isChoiceLocked = false;
       
-      // 단어 표시 리렌더링 효과
       const wordEl = document.getElementById('current-word');
       wordEl.classList.remove('pop-in');
-      void wordEl.offsetWidth; // trigger reflow
+      void wordEl.offsetWidth; // 애니메이션 리셋
       wordEl.innerText = currentRound.word;
       wordEl.classList.add('pop-in');
 
-      // 보기 버튼 생성
       const choicesArea = document.getElementById('choices-area');
       choicesArea.innerHTML = '';
-      currentRound.choices.forEach((choice, i) => {
+      currentRound.choices.forEach((choice) => {
         const btn = document.createElement('button');
-        btn.className = "min-h-[90px] rounded-3xl border-4 border-slate-200 bg-white text-slate-700 text-2xl font-bold shadow-sm transition-all hover:scale-[1.03] hover:border-blue-300 hover:bg-blue-50";
+        // 전자칠판을 고려한 거대한 버튼 디자인
+        btn.className = "min-h-[100px] md:min-h-[140px] rounded-3xl md:rounded-[2rem] border-4 border-slate-200 bg-white text-slate-700 text-3xl md:text-5xl font-bold shadow-md transition-all hover:scale-[1.02] active:scale-95 hover:border-blue-400 hover:bg-blue-50";
         btn.innerText = choice.text;
-        btn.onclick = (e) => handleChoice(choice, btn);
+        btn.onclick = () => handleChoice(choice, btn);
         choicesArea.appendChild(btn);
       });
 
-      document.getElementById('feedback-msg').style.display = 'none';
-      document.getElementById('feedback-guide').style.display = 'block';
+      const feedbackMsg = document.getElementById('feedback-msg');
+      feedbackMsg.style.opacity = '0';
     }
 
-    // 보기 선택 처리
     function handleChoice(choice, btnElement) {
       if (!started || gameOver || isChoiceLocked) return;
       isChoiceLocked = true;
       attempts++;
 
-      // 버튼 애니메이션
       btnElement.classList.add('btn-click');
       setTimeout(() => btnElement.classList.remove('btn-click'), 150);
 
       const feedbackMsg = document.getElementById('feedback-msg');
-      document.getElementById('feedback-guide').style.display = 'none';
-      feedbackMsg.style.display = 'block';
+      feedbackMsg.style.opacity = '1';
 
       if (choice.isCorrect) {
         score++;
         streak++;
         if (streak > bestStreak) bestStreak = streak;
         
-        btnElement.className = "min-h-[90px] rounded-3xl border-4 border-emerald-400 bg-emerald-100 text-emerald-800 text-2xl font-bold shadow-sm transition-all";
-        feedbackMsg.innerText = "🎉 정답이에요! 다음 문제로 고고!";
+        btnElement.className = "min-h-[100px] md:min-h-[140px] rounded-3xl md:rounded-[2rem] border-4 border-emerald-400 bg-emerald-100 text-emerald-800 text-3xl md:text-5xl font-bold shadow-md transition-all";
+        feedbackMsg.className = "text-center mt-6 text-xl md:text-2xl font-bold h-8 transition-opacity text-emerald-500";
+        feedbackMsg.innerText = "🎉 딩동댕! 잘했어요!";
       } else {
         streak = 0;
-        btnElement.className = "min-h-[90px] rounded-3xl border-4 border-rose-400 bg-rose-100 text-rose-800 text-2xl font-bold shadow-sm transition-all";
+        btnElement.className = "min-h-[100px] md:min-h-[140px] rounded-3xl md:rounded-[2rem] border-4 border-rose-400 bg-rose-100 text-rose-800 text-3xl md:text-5xl font-bold shadow-md transition-all";
         
-        // 정답 버튼 찾아 초록색으로 표시
+        // 오답 시 화면 흔들림 효과
+        document.getElementById('current-word').classList.add('shake');
+        setTimeout(() => document.getElementById('current-word').classList.remove('shake'), 400);
+
         const btns = document.getElementById('choices-area').children;
         for(let b of btns) {
           if (b.innerText === currentRound.answer) {
@@ -388,27 +395,19 @@
             b.classList.add('border-emerald-400', 'bg-emerald-100', 'text-emerald-800');
           }
         }
-        feedbackMsg.innerText = `앗! 정답은 '${currentRound.answer}'였어요.`;
+        feedbackMsg.className = "text-center mt-6 text-xl md:text-2xl font-bold h-8 transition-opacity text-rose-500";
+        feedbackMsg.innerText = `앗! 정답은 '${currentRound.answer}'입니다.`;
       }
 
       updateStats();
-
-      setTimeout(() => {
-        if (!gameOver) nextRound();
-      }, 1000);
+      setTimeout(() => { if (!gameOver) nextRound(); }, 1200);
     }
 
-    // 기록 업데이트
     function updateStats() {
-      const accuracy = attempts === 0 ? 0 : Math.round((score / attempts) * 100);
       document.getElementById('ui-score').innerText = `${score}개`;
-      document.getElementById('ui-accuracy').innerText = `${accuracy}%`;
       document.getElementById('ui-streak').innerText = streak;
-      document.getElementById('ui-best-streak').innerText = bestStreak;
-      document.getElementById('ui-attempts').innerText = attempts;
     }
 
-    // 게임 종료
     function endGame() {
       clearInterval(timerInterval);
       started = false;
@@ -416,14 +415,12 @@
       
       const accuracy = attempts === 0 ? 0 : Math.round((score / attempts) * 100);
       
-      document.getElementById('game-area').style.display = 'none';
-      document.getElementById('game-over-area').style.display = 'block';
-      document.getElementById('teacher-panel').style.display = 'block'; // 선생님 패널 다시 보이기
-      document.getElementById('start-btn').innerText = '🚀 새 게임';
-      
+      // 모달에 기록 전달 및 팝업 띄우기
       document.getElementById('final-score').innerText = score;
       document.getElementById('final-accuracy').innerText = accuracy;
       document.getElementById('final-best-streak').innerText = bestStreak;
+      
+      document.getElementById('game-over-modal').classList.remove('hidden');
     }
   </script>
 </body>
