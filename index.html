@@ -1,0 +1,491 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+
+const GAME_TIME = 60;
+const CHOICES_PER_ROUND = 4;
+
+// 💡 50개의 샘플 데이터 (다운로드용)
+const SAMPLE_CSV_DATA = `제시어,정답,오답1,오답2,오답3,오답4,오답5
+기쁘다,즐겁다,슬프다,아프다,밉다,느리다,어둡다
+슬프다,서운하다,기쁘다,신나다,가볍다,따뜻하다,빠르다
+빠르다,재빠르다,느리다,조용하다,차갑다,작다,약하다
+크다,커다랗다,작다,짧다,가볍다,어둡다,좁다
+작다,조그맣다,크다,길다,넓다,높다,무겁다
+똑똑하다,영리하다,어리석다,느리다,무섭다,차갑다,더럽다
+아름답다,예쁘다,밉다,시끄럽다,어둡다,더럽다,느리다
+용감하다,씩씩하다,나약하다,조용하다,게으르다,느리다,슬프다
+조용하다,고요하다,시끄럽다,빠르다,뜨겁다,밝다,화나다
+친절하다,상냥하다,불친절하다,차갑다,무섭다,느리다,딱딱하다
+까닭,이유,결과,방법,장소,시간,소리
+꾸미다,장식하다,부수다,망가뜨리다,버리다,숨기다,지우다
+단짝,짝꿍,원수,어른,동생,적,모르는사람
+돕다,거들다,방해하다,괴롭히다,숨기다,때리다,놀리다
+뛰어나다,훌륭하다,부족하다,모자라다,나쁘다,이상하다,작다
+마련하다,준비하다,버리다,잃어버리다,포기하다,숨기다,잊다
+마치다,끝내다,시작하다,계속하다,포기하다,망치다,멈추다
+망가지다,부서지다,고쳐지다,튼튼해지다,예뻐지다,좋아지다,빛나다
+머무르다,묵다,떠나다,도망치다,이사하다,사라지다,숨다
+모자라다,부족하다,충분하다,넘치다,많다,남다,크다
+견디다,참다,포기하다,울다,도망치다,쓰러지다,버리다
+뽐내다,자랑하다,부끄러워하다,숨다,슬퍼하다,사과하다,도망치다
+짐작하다,예상하다,모르다,잊어버리다,실수하다,숨기다,지우다
+기르다,키우다,버리다,죽이다,괴롭히다,팔다,잃어버리다
+가리키다,일컫다,감추다,덮다,모른체하다,지우다,숨기다
+고치다,수리하다,망가뜨리다,부수다,버리다,찢다,숨기다
+겪다,경험하다,피하다,도망치다,잊다,숨다,버리다
+살피다,관찰하다,지나치다,눈감다,버리다,잊다,도망치다
+알맞다,적당하다,모자라다,넘치다,다르다,이상하다,나쁘다
+어긋나다,틀어지다,맞다,어울리다,친해지다,좋다,기쁘다
+차분하다,침착하다,서두르다,당황하다,급하다,놀라다,화내다
+튼튼하다,단단하다,약하다,부드럽다,가볍다,흐리다,작다
+밝다,환하다,어둡다,우울하다,느리다,차갑다,조용하다
+어둡다,캄캄하다,밝다,환하다,깨끗하다,따뜻하다,기쁘다
+힘들다,고되다,쉽다,즐겁다,편안하다,가볍다,조용하다
+쉽다,간단하다,어렵다,복잡하다,무겁다,심각하다,차갑다
+어렵다,까다롭다,쉽다,편하다,가볍다,맑다,따뜻하다
+깨끗하다,말끔하다,더럽다,흐리다,거칠다,어둡다,시끄럽다
+강하다,힘세다,약하다,무르다,느리다,조용하다,가볍다
+약하다,허약하다,강하다,든든하다,빠르다,밝다,용감하다
+재미있다,즐겁다,지루하다,딱딱하다,무겁다,차갑다,슬프다
+지루하다,심심하다,재미있다,화려하다,반갑다,기쁘다,고맙다
+따뜻하다,포근하다,차갑다,서늘하다,빠르다,무겁다,슬프다
+차갑다,서늘하다,따뜻하다,포근하다,밝다,부드럽다,크다
+착하다,선하다,나쁘다,거칠다,고약하다,무섭다,시끄럽다
+나쁘다,고약하다,좋다,착하다,맑다,튼튼하다,친절하다
+넓다,드넓다,좁다,짧다,작다,약하다,차갑다
+좁다,비좁다,넓다,환하다,거대하다,높다,빠르다
+높다,우뚝하다,낮다,얕다,작다,짧다,좁다
+낮다,얕다,높다,밝다,강하다,넓다,용감하다`;
+
+// 초기 로딩 시 사용할 파싱 함수
+const parseInitialCSV = (csvText) => {
+  const lines = csvText.split("\n").map((line) => line.trim()).filter((line) => line);
+  const words = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(",").map((c) => c.trim());
+    if (cols.length >= 3) {
+      words.push({
+        word: cols[0],
+        correct: [cols[1]],
+        wrong: cols.slice(2).filter((w) => w !== ""),
+      });
+    }
+  }
+  return words;
+};
+
+// 기본 단어장 셋팅
+const DEFAULT_WORD_BANK = parseInitialCSV(SAMPLE_CSV_DATA);
+
+function shuffle(array) {
+  const copied = [...array];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
+}
+
+export default function SynonymTouchGame() {
+  const [wordBank, setWordBank] = useState(DEFAULT_WORD_BANK);
+  const [timeLeft, setTimeLeft] = useState(GAME_TIME);
+  const [started, setStarted] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [score, setScore] = useState(0);
+  const [attempts, setAttempts] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [usedIndices, setUsedIndices] = useState([]);
+  const [round, setRound] = useState(null);
+  const [showEndNotice, setShowEndNotice] = useState(false);
+  
+  // 파일 업로드 상태 관리
+  const [uploadError, setUploadError] = useState("");
+  const [uploadSuccess, setUploadSuccess] = useState("");
+  const fileInputRef = useRef(null);
+
+  const timerRef = useRef(null);
+  const roundTimeoutRef = useRef(null);
+
+  const accuracy = useMemo(() => {
+    if (attempts === 0) return 0;
+    return Math.round((score / attempts) * 100);
+  }, [score, attempts]);
+
+  // 라운드 생성 함수 (wordBank 상태에 의존)
+  const buildRound = (currentWordBank, used = []) => {
+    const availableIndices = currentWordBank
+      .map((_, index) => index)
+      .filter((index) => !used.includes(index));
+
+    const pool = availableIndices.length > 0 ? availableIndices : currentWordBank.map((_, index) => index);
+    const index = pool[Math.floor(Math.random() * pool.length)];
+    const entry = currentWordBank[index];
+    const correctWord = entry.correct[0];
+    const wrongChoices = shuffle(entry.wrong).slice(0, CHOICES_PER_ROUND - 1);
+    
+    // 오답이 부족하면 더미 데이터를 넣어서라도 4개의 보기를 맞춤
+    while(wrongChoices.length < CHOICES_PER_ROUND - 1) {
+      wrongChoices.push("오답" + wrongChoices.length);
+    }
+
+    const choices = shuffle([
+      ...wrongChoices.map((text) => ({ text, isCorrect: false })),
+      { text: correctWord, isCorrect: true },
+    ]);
+
+    return { index, word: entry.word, answer: correctWord, choices };
+  };
+
+  useEffect(() => {
+    if (!started || gameOver) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          clearTimeout(roundTimeoutRef.current);
+          setSelected(null);
+          setFeedback("⏰ 시간이 다 됐어요! 게임 끝!");
+          setShowEndNotice(true);
+          setGameOver(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerRef.current);
+  }, [started, gameOver]);
+
+  const startGame = () => {
+    clearInterval(timerRef.current);
+    clearTimeout(roundTimeoutRef.current);
+    const firstRound = buildRound(wordBank, []);
+    setTimeLeft(GAME_TIME);
+    setStarted(true);
+    setGameOver(false);
+    setScore(0);
+    setAttempts(0);
+    setStreak(0);
+    setBestStreak(0);
+    setFeedback("");
+    setSelected(null);
+    setUsedIndices([firstRound.index]);
+    setRound(firstRound);
+    setShowEndNotice(false);
+    setUploadError("");
+    setUploadSuccess("");
+  };
+
+  const nextRound = (currentIndex) => {
+    setUsedIndices((prev) => {
+      const nextUsed = prev.includes(currentIndex) ? prev : [...prev, currentIndex];
+      const next = buildRound(wordBank, nextUsed);
+      setRound(next);
+      setSelected(null);
+      setShowEndNotice(false);
+      return nextUsed.length >= wordBank.length ? [next.index] : [...nextUsed, next.index];
+    });
+  };
+
+  const handleChoice = (choice) => {
+    if (!started || gameOver || selected) return;
+
+    setSelected(choice.text);
+    setAttempts((prev) => prev + 1);
+
+    if (choice.isCorrect) {
+      const newStreak = streak + 1;
+      setScore((prev) => prev + 1);
+      setStreak(newStreak);
+      setBestStreak((prev) => Math.max(prev, newStreak));
+      setFeedback("🎉 정답이에요! 다음 문제로 고고!");
+    } else {
+      setStreak(0);
+      setFeedback(`앗! 아쉬워요. 정답은 '${round.answer}'였어요.`);
+    }
+
+    roundTimeoutRef.current = setTimeout(() => {
+      if (!gameOver) {
+        nextRound(round.index);
+        setFeedback("");
+      }
+    }, 1000);
+  };
+
+  // 📝 엑셀(CSV) 파일 다운로드 함수
+  const downloadTemplate = () => {
+    // 엑셀에서 한글이 깨지지 않도록 BOM(\uFEFF) 추가
+    const blob = new Blob(["\uFEFF" + SAMPLE_CSV_DATA], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "유의어단어장_기본양식.csv";
+    link.click();
+  };
+
+  // 📂 엑셀(CSV) 파일 업로드 및 분석 함수
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const lines = text.split("\n").map(line => line.trim()).filter(line => line);
+        
+        if (lines.length < 2) throw new Error("데이터가 너무 적거나 텅 빈 파일입니다.");
+        
+        const headers = lines[0].split(",");
+        if (!headers[0].includes("제시어") || !headers[1].includes("정답")) {
+          throw new Error("첫 번째 줄(제목)이 양식과 다릅니다. 양식을 다운받아 확인해주세요.");
+        }
+
+        const newWordBank = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(",").map(c => c.trim());
+          if (cols.length < 3) continue; // 오답이 최소 1개는 있어야 함
+          newWordBank.push({
+            word: cols[0],
+            correct: [cols[1]],
+            wrong: cols.slice(2).filter(w => w !== "")
+          });
+        }
+
+        if (newWordBank.length < 5) throw new Error("게임을 진행하려면 최소 5개 이상의 단어가 필요합니다.");
+
+        setWordBank(newWordBank);
+        setUploadSuccess(`성공! 총 ${newWordBank.length}개의 단어장을 불러왔습니다.`);
+        setUploadError("");
+        if (fileInputRef.current) fileInputRef.current.value = ""; // 파일 입력창 초기화
+      } catch (error) {
+        setUploadError(`오류: ${error.message}`);
+        setUploadSuccess("");
+      }
+    };
+    reader.readAsText(file, "utf-8"); // UTF-8 형식으로 읽기
+  };
+
+  const progressValue = (timeLeft / GAME_TIME) * 100;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-50 to-blue-100 p-4 md:p-8 font-sans">
+      <div className="mx-auto max-w-5xl space-y-6">
+        
+        {/* 🛠 선생님용 단어장 관리 패널 (게임 대기 중에만 표시) */}
+        {!started && !gameOver && (
+          <Card className="rounded-[2rem] border-4 border-dashed border-blue-300 bg-white/70 shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl font-bold text-slate-700 flex items-center gap-2">
+                📂 선생님 단어장 관리 (CSV 파일 업로드)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <Button onClick={downloadTemplate} variant="outline" className="rounded-xl border-blue-400 text-blue-600 hover:bg-blue-50">
+                  📥 단어장 기본 양식 다운로드
+                </Button>
+                
+                <div className="flex items-center gap-2 w-full max-w-sm">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileUpload}
+                    ref={fileInputRef}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* 업로드 상태 메시지 */}
+              {uploadError && <p className="text-rose-500 font-bold text-sm bg-rose-50 p-2 rounded-lg">⚠️ {uploadError}</p>}
+              {uploadSuccess && <p className="text-emerald-600 font-bold text-sm bg-emerald-50 p-2 rounded-lg">✅ {uploadSuccess}</p>}
+              
+              <p className="text-sm text-slate-500">※ 다운로드한 양식을 엑셀에서 열어 단어를 수정한 뒤, <b>[파일] - [다른 이름으로 저장] - [CSV (쉼표로 분리)]</b> 형식으로 저장해서 업로드해주세요.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
+        >
+          {/* 메인 게임 영역 */}
+          <Card className="rounded-[2rem] border-4 border-white shadow-2xl bg-white/90 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <CardTitle className="text-3xl font-extrabold text-blue-600 tracking-tight">✨ 비슷한 말 찾기 게임 ✨</CardTitle>
+                  <p className="mt-2 text-base font-medium text-slate-600">
+                    현재 {wordBank.length}개의 낱말이 준비되어 있어요!
+                  </p>
+                </div>
+                <Button onClick={startGame} className="rounded-2xl px-6 py-6 text-lg font-bold bg-blue-500 hover:bg-blue-600 shadow-lg hover:scale-105 transition-transform text-white">
+                  {started ? "🔄 다시 시작" : "🚀 게임 시작"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                <StatCard icon="⏰" label="남은 시간" value={`${timeLeft}초`} color="text-rose-500" />
+                <StatCard icon="🏆" label="맞힌 개수" value={`${score}개`} color="text-amber-500" />
+                <StatCard icon="🎯" label="정확도" value={`${accuracy}%`} color="text-emerald-500" />
+              </div>
+
+              <div className="space-y-2">
+                <Progress value={progressValue} className="h-4 rounded-full bg-slate-200" indicatorClassName="bg-blue-500" />
+              </div>
+
+              {showEndNotice && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border-4 border-amber-300 bg-amber-100 px-4 py-3 text-center text-lg font-bold text-amber-800"
+                >
+                  시간이 끝났어요! 아래에서 결과를 확인하세요!
+                </motion.div>
+              )}
+
+              {/* 문제 영역 */}
+              {started && round && !gameOver && (
+                <>
+                  <div className="rounded-[2rem] bg-gradient-to-r from-blue-50 to-indigo-50 p-8 text-center border-4 border-blue-100 shadow-inner">
+                    <p className="mb-3 text-base font-bold text-blue-400">이 낱말과 비슷한 말은?</p>
+                    <motion.div
+                      key={round.word}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", bounce: 0.5 }}
+                      className="text-5xl font-black tracking-tight text-slate-800 md:text-6xl"
+                    >
+                      {round.word}
+                    </motion.div>
+                  </div>
+
+                  {/* 보기 영역 */}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {round.choices.map((choice, i) => {
+                      const isSelected = selected === choice.text;
+                      const showCorrect = selected && choice.isCorrect;
+                      const isWrongSelected = isSelected && !choice.isCorrect;
+
+                      let className =
+                        "min-h-[90px] rounded-3xl border-4 text-2xl font-bold shadow-sm transition-all hover:scale-[1.03] active:scale-95 ";
+
+                      if (showCorrect) className += " border-emerald-400 bg-emerald-100 text-emerald-800";
+                      else if (isWrongSelected) className += " border-rose-400 bg-rose-100 text-rose-800";
+                      else className += " border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50";
+
+                      return (
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          key={i}
+                          onClick={() => handleChoice(choice)}
+                          disabled={!started || gameOver || !!selected}
+                          className={className}
+                        >
+                          {choice.text}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 피드백 영역 */}
+                  <div className="flex min-h-[50px] items-center justify-center rounded-2xl bg-slate-50">
+                    {feedback ? (
+                      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-xl font-bold text-slate-700">
+                        {feedback}
+                      </motion.div>
+                    ) : (
+                      <p className="text-base font-medium text-slate-400">정답을 고르면 다음 문제로 넘어갑니다!</p>
+                    )}
+                  </div>
+                </>
+              )}
+              
+              {!started && !gameOver && (
+                <div className="text-center py-12 text-slate-500 font-medium text-lg border-4 border-dashed rounded-3xl border-slate-200">
+                  위의 <span className="text-blue-500 font-bold">게임 시작</span> 버튼을 눌러주세요!
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 사이드 영역 */}
+          <div className="space-y-6">
+            <Card className="rounded-[2rem] border-4 border-white shadow-xl bg-white/90">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-slate-700">📊 내 기록</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 font-semibold">
+                <div className="flex items-center justify-between rounded-2xl bg-orange-50 p-4 border-2 border-orange-100">
+                  <span className="text-orange-800">🔥 현재 연속 정답</span>
+                  <Badge className="rounded-full px-4 py-1 text-base bg-orange-500 hover:bg-orange-500 text-white">{streak}</Badge>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-indigo-50 p-4 border-2 border-indigo-100">
+                  <span className="text-indigo-800">👑 최고 연속 정답</span>
+                  <Badge className="rounded-full px-4 py-1 text-base bg-indigo-500 hover:bg-indigo-500 text-white">{bestStreak}</Badge>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4 border-2 border-slate-100">
+                  <span className="text-slate-600">도전 횟수</span>
+                  <Badge className="rounded-full px-4 py-1 text-base bg-slate-400 hover:bg-slate-400 text-white" variant="secondary">{attempts}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-[2rem] border-4 border-white shadow-xl bg-white/90">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-slate-700">🎮 게임 방법</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-base font-medium leading-relaxed text-slate-600">
+                <p>1️⃣ 크게 적힌 낱말을 읽어보세요.</p>
+                <p>2️⃣ 4개의 보기 중 가장 비슷한 뜻을 가진 낱말을 터치해요.</p>
+                <p>3️⃣ 60초 안에 최대한 많이 맞춰서 신기록을 세워보세요!</p>
+              </CardContent>
+            </Card>
+
+            {gameOver && (
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="rounded-[2rem] border-4 border-blue-500 bg-slate-800 text-white shadow-2xl">
+                  <CardHeader>
+                    <CardTitle className="text-3xl text-yellow-400">🎉 게임 종료!</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-xl font-bold">1분 동안 무려 <span className="text-yellow-400 text-3xl">{score}</span>개의 단어를 맞혔어요!</p>
+                    <div className="bg-slate-700 p-4 rounded-2xl space-y-2 text-slate-200">
+                      <p>✨ 정확도: {accuracy}%</p>
+                      <p>🔥 최고 연속 정답: {bestStreak}번</p>
+                    </div>
+                    <Button variant="secondary" onClick={startGame} className="mt-4 w-full rounded-2xl py-6 text-lg font-bold bg-white text-slate-800 hover:bg-slate-200">
+                      한 번 더 도전하기!
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, color }) {
+  return (
+    <div className="rounded-3xl bg-white p-4 shadow-sm border-2 border-slate-100 flex flex-col items-center justify-center text-center">
+      <div className="mb-1 flex items-center gap-2 text-slate-500 font-bold">
+        <span className="text-xl">{icon}</span>
+        <span className="text-sm">{label}</span>
+      </div>
+      <div className={`text-3xl font-black tracking-tight ${color}`}>{value}</div>
+    </div>
+  );
+}
