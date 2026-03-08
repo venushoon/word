@@ -30,7 +30,6 @@
       40%, 60% { transform: translate3d(4px, 0, 0); }
     }
 
-    /* 모바일 화면 맞춤용 */
     .game-board-fit { max-height: calc(100dvh - 120px); }
   </style>
 </head>
@@ -77,8 +76,7 @@
               <div id="current-word" class="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight text-slate-800 pop-in py-2">단어</div>
             </div>
 
-            <div id="choices-area" class="grid grid-cols-2 gap-3 md:gap-6 mt-auto mb-2">
-              </div>
+            <div id="choices-area" class="grid grid-cols-2 gap-3 md:gap-6 mt-auto mb-2"></div>
             
             <p id="feedback-msg" class="text-center text-sm md:text-2xl font-bold h-6 md:h-8 transition-opacity"></p>
           </div>
@@ -120,11 +118,11 @@
   </footer>
 
   <div id="game-over-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-in">
-    <div class="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden text-center border-4 md:border-8 border-blue-400">
-      <div class="bg-blue-500 text-white py-6 md:py-8">
+    <div class="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden text-center border-4 md:border-8 border-blue-400 flex flex-col max-h-[90dvh]">
+      <div class="bg-blue-500 text-white py-6 md:py-8 flex-shrink-0">
         <h2 class="text-3xl md:text-6xl font-black tracking-tight text-yellow-300 drop-shadow-md">🎉 게임 종료!</h2>
       </div>
-      <div class="p-6 md:p-12 space-y-6 md:space-y-8">
+      <div class="p-6 md:p-12 space-y-6 md:space-y-8 overflow-y-auto">
         <p class="text-xl md:text-3xl font-bold text-slate-600">
           60초 동안 무려 <br class="hidden md:block" />
           <span id="final-score" class="text-5xl md:text-7xl font-black text-blue-600">0</span><span class="text-2xl md:text-4xl">개의 유의어를 찾았어요!</span>
@@ -141,9 +139,14 @@
           </div>
         </div>
 
-        <button onclick="startGame()" class="w-full rounded-2xl md:rounded-full py-4 md:py-6 text-xl md:text-3xl font-bold bg-amber-400 text-amber-900 shadow-xl transition-transform active:scale-95">
-          🔄 다시 도전하기
-        </button>
+        <div class="flex gap-3 md:gap-4 mt-4">
+          <button onclick="startGame()" class="flex-1 rounded-2xl md:rounded-full py-4 md:py-6 text-lg md:text-3xl font-bold bg-amber-400 text-amber-900 shadow-xl transition-transform active:scale-95">
+            🔄 다시 도전
+          </button>
+          <button onclick="goToHome()" class="flex-1 rounded-2xl md:rounded-full py-4 md:py-6 text-lg md:text-3xl font-bold bg-slate-200 text-slate-700 shadow-xl transition-transform active:scale-95 hover:bg-slate-300">
+            🏠 처음으로
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -212,7 +215,7 @@
     let attempts = 0;
     let streak = 0;
     let bestStreak = 0;
-    let usedIndices = [];
+    let usedIndices = []; // 재시작해도 이 목록을 유지하여 중복 출제 방지
     let currentRound = null;
     let timerInterval = null;
     let isChoiceLocked = false;
@@ -262,6 +265,7 @@
           if (newWordBank.length < 5) throw new Error("최소 5개 이상의 단어가 필요합니다.");
 
           wordBank = newWordBank;
+          usedIndices = []; // 단어장이 바뀌면 사용 기록 초기화
           
           msgEl.className = "text-center mt-2 text-xs md:text-sm font-bold block max-w-7xl mx-auto p-2 rounded-lg bg-emerald-100 text-emerald-700";
           msgEl.innerText = `✅ 성공! 새로운 단어장이 적용되었습니다.`;
@@ -275,6 +279,7 @@
 
     function buildRound() {
       let availableIndices = wordBank.map((_, i) => i).filter(i => !usedIndices.includes(i));
+      // 모든 단어를 다 소진했을 때만 기록을 초기화
       if (availableIndices.length === 0) {
         usedIndices = [];
         availableIndices = wordBank.map((_, i) => i);
@@ -305,7 +310,7 @@
       started = true;
       gameOver = false;
       isChoiceLocked = false;
-      usedIndices = [];
+      // usedIndices = []; <-- 이전 게임 단어 중복 방지를 위해 삭제함!
 
       document.getElementById('game-over-modal').classList.add('hidden');
       document.getElementById('waiting-area').classList.add('hidden');
@@ -323,6 +328,21 @@
         
         if (timeLeft <= 0) endGame();
       }, 1000);
+    }
+
+    function goToHome() {
+      // 대기 화면으로 완전히 되돌리기
+      document.getElementById('game-over-modal').classList.add('hidden');
+      document.getElementById('game-area').classList.add('hidden');
+      document.getElementById('game-area').classList.remove('flex');
+      document.getElementById('waiting-area').classList.remove('hidden');
+      document.getElementById('restart-btn').classList.add('hidden');
+      
+      // 상태창 초기화
+      document.getElementById('ui-time').innerText = `${GAME_TIME}초`;
+      document.getElementById('ui-score').innerText = `0개`;
+      document.getElementById('ui-streak').innerText = `0`;
+      document.getElementById('ui-progress').style.width = `100%`;
     }
 
     function nextRound() {
@@ -387,7 +407,8 @@
       }
 
       updateStats();
-      setTimeout(() => { if (!gameOver) nextRound(); }, 1200);
+      // 대기 시간을 1200ms -> 600ms로 대폭 단축하여 반응성 상향
+      setTimeout(() => { if (!gameOver) nextRound(); }, 600);
     }
 
     function updateStats() {
